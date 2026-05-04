@@ -48,6 +48,39 @@ app.post('/increment-order', (req, res) => {
   res.json({ count: orderData.count });
 });
 
+// ── Pending orders list ──
+var pendingOrders = [];
+
+// POST /add-order — saves order details for admin panel
+app.post('/add-order', (req, res) => {
+  const { order_number, customer_name, items } = req.body;
+  pendingOrders.push({
+    order_number,
+    customer_name,
+    items, // array of { name, size, qty, emoji }
+    timestamp: new Date().toLocaleString()
+  });
+  res.json({ success: true });
+});
+
+// GET /orders — returns pending orders for admin panel
+app.get('/orders', (req, res) => {
+  res.json({ orders: pendingOrders });
+});
+
+// POST /clear-order — marks one order as shipped
+app.post('/clear-order', (req, res) => {
+  const { order_number } = req.body;
+  pendingOrders = pendingOrders.filter(o => String(o.order_number) !== String(order_number));
+  res.json({ success: true, orders: pendingOrders });
+});
+
+// POST /clear-all-orders — clears all pending orders
+app.post('/clear-all-orders', (req, res) => {
+  pendingOrders = [];
+  res.json({ success: true });
+});
+
 // Create a PaymentIntent — called by the checkout form
 app.post('/create-payment-intent', async (req, res) => {
   try {
