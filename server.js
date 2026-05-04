@@ -1,11 +1,11 @@
 /*
-  ╔══════════════════════════════════════════════════════════╗
-  ║   Bracelets in Bloom — Payment Server                   ║
-  ║   Built with Express + Stripe                           ║
-  ║                                                          ║
-  ║   NEVER share your STRIPE_SECRET_KEY publicly.          ║
-  ║   Set it as an environment variable on your host.       ║
-  ╚══════════════════════════════════════════════════════════╝
+  ╔══════════════════════════════════════════════════════════════╗
+  ║   Bracelets in Bloom — Payment Server                       ║
+  ║   Built with Express + Stripe                               ║
+  ║                                                              ║
+  ║   NEVER share your STRIPE_SECRET_KEY publicly.              ║
+  ║   Set it as an environment variable on your host.           ║
+  ╚══════════════════════════════════════════════════════════════╝
 */
 
 const express = require('express');
@@ -22,6 +22,30 @@ app.use(express.json());
 // Health check — visit /ping to confirm server is running
 app.get('/ping', (req, res) => {
   res.json({ status: 'ok', shop: 'Bracelets in Bloom 🌸' });
+});
+
+// ── Daily order counter (resets automatically at midnight) ──
+var orderData = { date: '', count: 0 };
+
+function getTodayCount() {
+  var today = new Date().toDateString();
+  if (orderData.date !== today) {
+    orderData.date  = today;
+    orderData.count = 0;
+  }
+  return orderData.count;
+}
+
+// GET /order-count — returns today's order count
+app.get('/order-count', (req, res) => {
+  res.json({ count: getTodayCount(), date: orderData.date });
+});
+
+// POST /increment-order — called when a payment succeeds
+app.post('/increment-order', (req, res) => {
+  getTodayCount(); // reset if new day
+  orderData.count++;
+  res.json({ count: orderData.count });
 });
 
 // Create a PaymentIntent — called by the checkout form
